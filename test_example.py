@@ -6,19 +6,30 @@
 # Я скопировал пример из раздела "Add Example Test" и запустил его локально.
 
 import re
+import pytest
 from playwright.sync_api import Page, expect
 
-def test_has_title(page: Page):
-    page.goto("https://playwright.dev/")
+BASE_URL = "https://playwright.dev/"
 
-    # Expect a title "to contain" a substring.
+
+@pytest.fixture(autouse=True)
+def navigate_to_home(page: Page):
+    """Фикстура: автоматическая навигация на главную страницу перед каждым тестом."""
+    page.goto(BASE_URL)
+    yield page
+
+
+def test_has_title(page: Page):
+    """Проверяет, что заголовок страницы содержит подстроку 'Playwright'."""
     expect(page).to_have_title(re.compile("Playwright"))
 
-def test_get_started_link(page: Page):
-    page.goto("https://playwright.dev/")
 
-    # Click the get started link.
+def test_get_started_link(page: Page):
+    """Клик по ссылке 'Get started' и проверка перехода на страницу установки."""
     page.get_by_role("link", name="Get started").click()
 
-    # Expects page to have a heading with the name of Installation.
+    # Проверка, что URL изменился после клика
+    expect(page).to_have_url(re.compile(r".*/docs/intro"))
+
+    # Проверка видимости заголовка раздела установки
     expect(page.get_by_role("heading", name="Installation")).to_be_visible()
